@@ -39,6 +39,10 @@ def slavePodTemplate = """
     def branch          = "${scm.branches[0].name}".replaceAll(/^\*\//, '').replace("/", "-").toLowerCase()
     if (branch == "master") {
       environment = "prod"
+    } else if (branch.contains('dev-feature/')){
+      environment = "dev"
+    } else if (branch.contains('qa-feature/')){
+      environment = "qa"
     }
 
 
