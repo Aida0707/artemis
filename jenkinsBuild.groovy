@@ -36,7 +36,11 @@ def slavePodTemplate = """
               path: /var/run/docker.sock
     """
     def environment = ""
+    def docker_image = ""
     def branch          = "${scm.branches[0].name}".replaceAll(/^\*\//, '').replace("/", "-").toLowerCase()
+
+    docker_image = "aida77/artemis:${branch.replace('version/', 'v')}"
+
     if (branch == "master") {
       environment = "prod"
     } else if (branch.contains('dev-feature')){
@@ -54,7 +58,7 @@ def slavePodTemplate = """
         container("docker") {
             dir('deployments/docker') {
                 stage("Docker Build") {
-                    sh "docker build -t aida77/artemis:${branch.replace('version/', 'v')}  ."
+                    sh "docker build -t ${docker_image} ."
                 }
                 stage("Docker Login") {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'password', usernameVariable: 'username')]) {
@@ -62,14 +66,15 @@ def slavePodTemplate = """
                     }
                 }
                 stage("Docker Push") {
-                    sh "docker push aida77/artemis:${branch.replace('version/', 'v')}"
+                    sh "docker push ${docker_image}"
                 }
 
                 stage("Trigger Deploy") {
                   build job: 'artemis-deploy', 
                   parameters: [
                       [$class: 'BooleanParameterValue', name: 'terraformApply',     value: true],
-                      [$class: 'StringParameterValue',  name: 'environment',         value: "${environment}"]
+                      [$class: 'StringParameterValue',  name: 'environment',        value: "${environment}"]
+                      [$class: 'StringParameterValue',  name: 'docker_image',       value: "${docker_image}"]
                       ]
                 }
             }
