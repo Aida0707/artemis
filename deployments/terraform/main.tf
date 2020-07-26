@@ -16,6 +16,8 @@ variable "deployment_environment" {
   default = "dev"
 }
 
+variable "environment" {
+}
 
 variable "deployment_image" {
   default = "fsadykov/artemis:master"
